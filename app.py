@@ -35,21 +35,29 @@ if modulo == "Conciliação Bancária (OFX)":
             
             transacoes = []
             for t in extrato.transactions:
+                valor = float(t.amount)
+                # Regra universal: valor positivo é Crédito, negativo é Débito
+                tipo_transacao = "Crédito" if valor > 0 else "Débito"
+                
                 transacoes.append({
                     "Data": t.date.strftime("%Y-%m-%d"),
-                    "Valor (R$)": float(t.amount),
-                    "Tipo": "Crédito" if t.type == "CREDIT" else "Débito",
+                    "Valor (R$)": valor,
+                    "Tipo": tipo_transacao,
                     "Histórico Bancário": t.memo,
                     "Status": "Pendente"
                 })
                 
             df = pd.DataFrame(transacoes)
             
-            # Métricas rápidas no topo
+            # Métricas rápidas no topo recalculadas corretamente
+            total_transacoes = len(df)
+            total_creditos = len(df[df["Tipo"] == "Crédito"])
+            total_debitos = len(df[df["Tipo"] == "Débito"])
+            
             col1, col2, col3 = st.columns(3)
-            col1.metric("Total de Transações", len(df))
-            col2.metric("Créditos Encontrados", len(df[df["Tipo"] == "Crédito"]))
-            col3.metric("Débitos Encontrados", len(df[df["Tipo"] == "Débito"]))
+            col1.metric("Total de Transações", total_transacoes)
+            col2.metric("Créditos Encontrados", total_creditos)
+            col3.metric("Débitos Encontrados", total_debitos)
             
             st.markdown("---")
             st.subheader("Extrato Importado")
